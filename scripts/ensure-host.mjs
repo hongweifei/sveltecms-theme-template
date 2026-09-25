@@ -121,18 +121,16 @@ function ensure() {
 		!existsSync(path.join(HOST, 'drizzle/meta/_journal.json')) ||
 		!existsSync(path.join(HOST, 'src/lib/paraglide/messages'));
 	if (needsPnpm) {
+		// 复用下方 sh() 的平台分派，别另写一套：cmd.exe 只在 Windows 存在，硬写它会让
+		// Linux/macOS 上 pnpm 正常时也探到「不可执行」（CI 实测踩过）。
 		try {
-			execFileSync('cmd.exe', ['/c', 'pnpm', '--version'], {
-				stdio: 'ignore',
-				windowsHide: true
-			});
+			sh('pnpm', ['--version'], { stdio: 'ignore' });
 		} catch {
-			if (process.platform !== 'win32') throw new Error('pnpm 不可执行');
 			console.error('[host] 需要装配宿主，但本进程无法执行 pnpm');
 			console.error(
-				'[host] 常见原因是 corepack 的 pnpm shim 损坏（报 Cannot find module …corepack/dist/pnpm.js）。'
+				'[host] Windows 上常见原因是 corepack 的 pnpm shim 损坏（报 Cannot find module …corepack/dist/pnpm.js）。'
 			);
-			console.error('[host] 修 corepack，或先手动执行：');
+			console.error('[host] 修好 pnpm，或先手动执行：');
 			console.error(`[host]   npx pnpm@${PNPM_VERSION} install --dir "${HOST}"`);
 			process.exit(1);
 		}
