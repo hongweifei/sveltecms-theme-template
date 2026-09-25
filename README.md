@@ -116,21 +116,54 @@ findRelated）、`ctx.cms.collections`、`ctx.cms.menus`、`ctx.cms.media`、
 
 ## 发布与上架
 
+两条交付路，产物同源（都按 `theme.config.ts` 的 `name` 认身份）：
+
 ```bash
-pnpm package                        # dist/<name>-<version>.zip + SHA-256
-git tag v0.1.0 && git push --tags   # 挂 Release 资产
+pnpm package      # dist/<name>-<version>.zip + SHA-256
+pnpm npm-pkg      # dist/npm/（摊平发布物）→ 打印 npm publish 命令与宿主 shim 写法
+git tag v0.1.0 && git push --tags   # CI：挂 Release 资产；配了 NPM_TOKEN 才发 npm
 ```
 
-安装方式（两条都可用，但**主题市场尚未上线**，所以目前没有"浏览市场一键装"）：
+`dist/npm/` 是**生成的**，`package.json` 不带 `private`——所以模板自身可以一直
+`private: true`（防误发模板），作者不用为了发布去改它。护栏：包名仍是
+`sveltecms-theme-template` 或不以 `sveltecms-theme-` 开头时直接拒绝生成，
+因为宿主按 `sveltecms-plugin-*` / `data/themes/<name>` 那套约定认包。
 
-1. **zip**：后台「主题」页上传 → 自动按 `config.name` 归一落地 → 重新构建后生效。
-2. **npm 包**：`pnpm add sveltecms-theme-<name>`，再在 `data/themes/<name>/theme.config.ts`
-   写一行 `export { default } from 'sveltecms-theme-<name>';`（宿主 glob 不匹配
-   `node_modules`，需这行 re-export 入册）。注意此路径下样式需自带：宿主的
-   Tailwind 自动源检测不扫 `node_modules`，主题里的工具类会静默不生成——发布成
-   包时请用 Svelte 作用域样式或自带 css。
+### 路 1：zip（后台上传）
 
-版本号唯一事实源 = `theme/theme.config.ts` 的 `version`。
+安装器会把落地目录名**归一到 `config.name`**（zip 文件名只是解析失败时的回退），
+所以不必纠结文件名。装完后台会明示：**要重新构建才生效**。
+
+### 路 2：npm 包
+
+`pnpm add sveltecms-theme-<name>` 之后必须在宿主补一行 shim——宿主收录主题靠
+`import.meta.glob('/data/themes/*/theme.config.ts')`，`node_modules` 不在匹配范围：
+
+```ts
+// data/themes/<name>/theme.config.ts
+export { default } from 'sveltecms-theme-<name>';
+```
+
+`pnpm npm-pkg` 会把这三行的确切路径与内容打印出来。**目录名必须等于
+`config.name`**，否则宿主注册表 `collectThemes()` 拒收（渲染端按
+`/data/themes/<name>/` 前缀反查组件模块）。补完同样要重新构建。
+
+> **样式限制（实测，别踩）**：Tailwind 的自动源检测跳过 `node_modules` 与 `.gitignore`
+> 里的路径，所以包内 `.svelte` 写的 utility 类**不会生成任何 CSS**——组件本身确实
+> 进了 bundle，表现却是"装上却静默没样式"。
+>
+> 试过在宿主 `src/app.css` 加 `@source '../node_modules/sveltecms-theme-*/**/*.svelte'`
+> 纳源，**未生效**：A/B 构建里符号链接包与普通 `node_modules/<dir>` 两种探针的类名
+> 在产物 CSS 中均 0 命中（同批 CSS 里 `text-sm` 有 56 处，排除 grep 目标错误），
+> 尽管 Tailwind v4 文档称 `@source` 正是用来覆盖 `node_modules` 排除的。
+>
+> 因此现状是：**主题自带 CSS**。本模板的布局/模板一律用 Svelte 作用域样式，
+> 宿主设计令牌通过 `var(--color-*)` 取用（这些变量由宿主 `:root` 提供，不受
+> Tailwind 扫描范围影响）。要用宿主的 utility 类，请把主题以目录形式放进宿主的
+> `data/themes/`（zip 安装即如此，那条路在扫描范围内，样式正常）。
+
+版本号唯一事实源 = `theme/theme.config.ts` 的 `version`（`package.mjs` 与
+`prepare-npm-pkg.mjs` 都从它读，不另维护第二处）。
 
 ## 疑难
 

@@ -1,0 +1,31 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.24.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --prod=false
+      - name: Build zip（根布局：theme.config.ts 在 zip 根）
+        run: node scripts/package.mjs | tee package-out.txt
+      - name: Attach to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+          body: |
+            SHA-256 见工作流日志（package.mjs 输出），供自托管方核对下载完整性。
+            注意：主题市场尚未上线，本资产不会被自动收录——用户在后台
+            「主题 → 安装主题」上传此 zip，然后**重新构建**站点才会生效。

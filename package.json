@@ -14,7 +14,8 @@
 		"dev": "node scripts/ensure-host.mjs && concurrently -k -n host,watch -c cyan,green \"pnpm --dir .sveltecms exec vite dev --port 5180 --strictPort\" \"node scripts/sync-watch.mjs\"",
 		"test": "node scripts/ensure-host.mjs && vitest run",
 		"check": "node scripts/ensure-host.mjs && svelte-check --tsconfig ./tsconfig.json",
-		"package": "node scripts/package.mjs"
+		"package": "node scripts/package.mjs",
+		"npm-pkg": "node scripts/prepare-npm-pkg.mjs"
 	},
 	"devDependencies": {
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
