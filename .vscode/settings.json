@@ -1,0 +1,6 @@
+{
+	// TS/语言服务统一走模板 tsconfig——$lib 与宿主 .sveltecms/ 类型层由此解析，
+	// 编辑器提示与 pnpm check 同一个 typescript 版本（README「语法提示」一节的依据）
+	"typescript.tsdk": "node_modules/typescript/lib",
+	"typescript.enablePromptUseWorkspaceTsdk": true
+}

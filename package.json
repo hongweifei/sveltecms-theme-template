@@ -1,0 +1,28 @@
+{
+	"name": "sveltecms-theme-template",
+	"version": "0.1.0",
+	"description": "SvelteCMS 主题开发模板——改名即用的脚手架",
+	"private": true,
+	"type": "module",
+	"engines": {
+		"node": ">=24"
+	},
+	"packageManager": "pnpm@11.24.0",
+	"scripts": {
+		"ensure": "node scripts/ensure-host.mjs",
+		"rename": "node scripts/rename.mjs",
+		"dev": "node scripts/ensure-host.mjs && concurrently -k -n host,watch -c cyan,green \"pnpm --dir .sveltecms exec vite dev --port 5180 --strictPort\" \"node scripts/sync-watch.mjs\"",
+		"test": "node scripts/ensure-host.mjs && vitest run",
+		"check": "node scripts/ensure-host.mjs && svelte-check --tsconfig ./tsconfig.json",
+		"package": "node scripts/package.mjs"
+	},
+	"devDependencies": {
+		"@sveltejs/vite-plugin-svelte": "^7.1.2",
+		"adm-zip": "^0.6.0",
+		"concurrently": "^9.1.0",
+		"svelte": "^5.56.8",
+		"svelte-check": "^4.7.6",
+		"typescript": "^6.0.3",
+		"vitest": "^4.1.10"
+	}
+}

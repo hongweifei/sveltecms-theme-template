@@ -1,0 +1,43 @@
+{
+	// 类型环境借用仓内宿主 .sveltecms/：extends 其 SvelteKit 生成层（$app/*
+	// 模块声明、$lib paths、路由类型）。paths 子级整体覆盖父级，$lib 需
+	// 重新声明指向 .sveltecms/src/lib；宿主 src/app.d.ts（Locals 增强）必须
+	// 显式 include。共享库锁本仓 node_modules 防双实例 brand 冲突。
+	// 前提：宿主跑过 svelte-kit sync（pnpm check 的 ensure 步骤自动保证）。
+	//
+	// 主题为什么能直接 import '$lib/cms/types/theme'：主题源码由 ensure-host
+	// 同步进宿主的 data/themes/<name>/，本就在宿主项目根内，别名可解析——
+	// 与插件模板同一条链路，不需要额外的类型出口包。
+	"compilerOptions": {
+		"allowJs": true,
+		"checkJs": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"sourceMap": true,
+		"strict": true,
+		"moduleResolution": "bundler",
+		"noEmit": true,
+		"paths": {
+			"$lib": ["./.sveltecms/src/lib"],
+			"$lib/*": ["./.sveltecms/src/lib/*"],
+			"$app/types": ["./.sveltecms/.svelte-kit/types/index.d.ts"],
+			"svelte": ["./node_modules/svelte"],
+			"svelte/*": ["./node_modules/svelte/*"]
+		}
+	},
+	"include": [
+		// 宿主 SvelteKit 生成的类型层 + 全局类型增强（Locals.user 等）。
+		// 刻意不 include `.svelte-kit/types/**/$types.d.ts`（插件模板那边有这一行）：
+		// 生成的路由 $types 会 import 各自的源文件，等于把宿主全部 +page.server.ts
+		// 拖进主题的类型程序，而它们脱离宿主 tsconfig 后 `./$types` 解析不到，
+		// 表现为「模板报红在作者没写过的文件上」。主题不写 SvelteKit 路由，用不上它。
+		".sveltecms/.svelte-kit/ambient.d.ts",
+		".sveltecms/.svelte-kit/non-ambient.d.ts",
+		".sveltecms/src/app.d.ts",
+		"theme/**/*.ts",
+		"theme/**/*.svelte"
+	],
+	"exclude": [".sveltecms/node_modules", ".sveltecms/data", ".sveltecms/build"]
+}
